@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    options {
-        ansiColor('xterm')   // enables colored logs
-    }
 
     stages {
         stage('Checkout') {
