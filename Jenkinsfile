@@ -3,14 +3,13 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                echo "📥 Checking out code..."
-                checkout([$class: 'GitSCM',
-                          branches: [[name: '*/main']],
-                          userRemoteConfigs: [[url: 'https://github.com/kikivaz/aceest-fitness.git']]
-                ])
-            }
-        }
+    steps {
+        checkout([$class: 'GitSCM',
+                  branches: [[name: '*/main']],
+                  userRemoteConfigs: [[url: 'https://github.com/kikivaz/aceest-fitness.git']]
+        ])
+    }
+}
 
         stage('Clean Build') {
             steps {
