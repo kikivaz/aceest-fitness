@@ -1,42 +1,57 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Checkout') {
-    steps {
-        checkout([$class: 'GitSCM',
-                  branches: [[name: '*/main']],
-                  userRemoteConfigs: [[url: 'https://github.com/kikivaz/aceest-fitness.git']]
-        ])
+    environment {
+        REPO_URL = 'https://github.com/kikivaz/aceest-fitness.git'
+        IMAGE_NAME = 'aceest-fitness:jenkins'
+        TEST_IMAGE = 'aceest-fitness:jenkins-test'
+        SAFE_DIR = '/var/jenkins_home/workspace/fitness_app'
     }
-}
 
-        stage('Clean Build') {
+    stages {
+        stage('Prepare Workspace') {
             steps {
-                echo "🔨 Building Docker image..."
-                sh 'docker build --no-cache --progress=plain -t aceest-fitness:jenkins .'
+                echo "🧩 Marking workspace as safe for Git..."
+                sh "git config --global --add safe.directory '${SAFE_DIR}' || true"
             }
         }
 
-        stage('Test') {
+        stage('Checkout') {
+            steps {
+                echo "📥 Checking out code from ${REPO_URL}..."
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          userRemoteConfigs: [[url: "${REPO_URL}"]]
+                ])
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "🔨 Building Docker image..."
+                sh "docker build --no-cache --progress=plain -t ${IMAGE_NAME} ."
+            }
+        }
+
+        stage('Run Tests') {
             steps {
                 echo "🧪 Running tests..."
-                sh 'docker build --target test --progress=plain -t aceest-fitness:jenkins-test .'
-                sh 'docker run --rm aceest-fitness:jenkins-test'
+                sh "docker build --target test --progress=plain -t ${TEST_IMAGE} ."
+                sh "docker run --rm ${TEST_IMAGE}"
             }
         }
     }
 
     post {
         success {
-            echo "✅ Build and tests passed!"
+            echo "✅ Build and tests passed successfully!"
         }
         failure {
             echo "❌ Build or tests failed."
         }
         always {
             echo "🧹 Cleaning up Docker images..."
-            sh 'docker image prune -f || true'
+            sh "docker image prune -f || true"
         }
     }
 }
